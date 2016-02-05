@@ -1,0 +1,32 @@
+application:
+  image: busybox
+  volumes:
+      - ./:/data/application
+
+php-upstream:
+    image: gogcom/docker-php-fpm
+    expose:
+        - 9000
+    volumes_from:
+        - application
+    environment:
+        GOG_ENVIRONMENT: dev
+        GOG_LOCATION: local
+nginx:
+    image: gogcom/docker-nginx
+    ports:
+        - 8401:80
+    links:
+        - php-upstream
+    volumes_from:
+        - application
+    environment:
+        VIRTUAL_HOST: dredd.gog.docker
+
+dredd:
+    build: .
+    links:
+        - nginx
+    volumes_from:
+        - application
+    command: bash -c "cd /data/application; dredd ./apiary.md nginx --dry-run"
